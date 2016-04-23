@@ -1,0 +1,5 @@
+file,num_nodes,time(ms)
+/home/alex/quality_tracing/skeleton-051214-1051.434.nml,7137,243291700
+/home/alex/quality_tracing/skeleton-051214-1051.434.nml,7137,243291700
+/home/alex/quality_tracing/skeleton-051214-1051.434.nml,7137,243291700
+/home/alex/quality_tracing/skeleton-051214-1051.434.nml,7137,243291700

@@ -1,0 +1,10 @@
+skeleton-051214-1051.434.nml
+
+/home/alex/quality_tracing/:
+filelist.txt
+getTuples.cpp
+knossosNumNodes.py
+nodelog.txt
+README.md
+run_all_in_dir.sh
+skeleton-051214-1051.434.nml
