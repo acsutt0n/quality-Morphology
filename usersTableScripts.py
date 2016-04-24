@@ -183,7 +183,32 @@ def df_to_sqltable(df, cursor, table_name, types, columns=None, force=True):
 
 #
 
+def nodes_added(df):
+  """ Calculate the nodes added in a skeleton file. """
+  curr_cell, curr_node, curr_time = None, None, None
+  nodes_diff, time_diff = [], []
+  # Iterate through the data frame's values
+  for i in range(df.shape[0]):
+    if df.cellname.values[i] == curr_cell: # Same as active file
+      nodes_diff.append(df.num_nodes.values[i] - curr_node)
+      curr_node = df.num_nodes.values[i]
+      time_diff.append(df.time_ms.values[i] - curr_time)
+      curr_time = df.time_ms.values[i]
+    else: # A new cell (or the first cell)
+      curr_cell = df.cellname.values[i] # Set the new cell
+      nodes_diff.append(df.num_nodes.values[i])
+      curr_node = df.num_nodes.values[i]
+      time_diff.append(0) # Not really accurate but real way is too long
+      curr_time = df.time_ms.values[i]
+  # Now len(_diff) lists should equal df.shape[0]
+  return nodes_diff, time_diff
 
+
+
+
+######################################################################
+if __name__ == "__main__":
+  print('Module is used interactively')
 
 
 
