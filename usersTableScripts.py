@@ -132,7 +132,37 @@ def build_filenames(nodedf, userdf):
   
   return pd.DataFrame.from_dict(data=files, orient='columns')
 
-#
+
+
+def nodes_added(df):
+  """ Calculate the nodes added in a skeleton file. """
+  curr_cell, curr_node, curr_time = None, None, None
+  nodes_diff, time_diff = [], []
+  # Iterate through the data frame's values
+  for i in range(df.shape[0]):
+    if df.cellname.values[i] == curr_cell: # Same as active file
+      if df.num_nodes.values[i] - curr_node > 0:
+        nodes_diff.append(df.num_nodes.values[i] - curr_node)
+      else:
+        nodes_diff.append(0)
+      curr_node = df.num_nodes.values[i]
+      if df.time_ms.values[i] - curr_time > 0:
+        time_diff.append(df.time_ms.values[i] - curr_time)
+      else:
+        time_diff.append(0)
+      curr_time = df.time_ms.values[i]
+    else: # A new cell (or the first cell)
+      curr_cell = df.cellname.values[i] # Set the new cell
+      nodes_diff.append(df.num_nodes.values[i])
+      curr_node = df.num_nodes.values[i]
+      time_diff.append(0) # Not really accurate but real way is too long
+      curr_time = df.time_ms.values[i]
+  # Now len(_diff) lists should equal df.shape[0]
+  return nodes_diff, time_diff
+
+
+#######################################################################
+# SQL interactions
 
 
 def df_to_sqltable(df, cursor, table_name, types, columns=None, force=True):
@@ -169,7 +199,8 @@ def df_to_sqltable(df, cursor, table_name, types, columns=None, force=True):
   # Add the entries to the table
   entries = []
   for i in range(df.shape[0]):
-    entries.append([typedict[types[x]](df[df.columns[x]][i]) for x in range(len(columns))])
+    entries.append([typedict[types[x]](df[df.columns[x]].values[i]) 
+                    for x in range(len(columns))])
   exec_string_ = ','.join(['?' for i in columns])
   exec_string = 'insert into %s values (%s)' %(table_name, exec_string_)
   try:
@@ -183,25 +214,30 @@ def df_to_sqltable(df, cursor, table_name, types, columns=None, force=True):
 
 #
 
-def nodes_added(df):
-  """ Calculate the nodes added in a skeleton file. """
-  curr_cell, curr_node, curr_time = None, None, None
-  nodes_diff, time_diff = [], []
-  # Iterate through the data frame's values
-  for i in range(df.shape[0]):
-    if df.cellname.values[i] == curr_cell: # Same as active file
-      nodes_diff.append(df.num_nodes.values[i] - curr_node)
-      curr_node = df.num_nodes.values[i]
-      time_diff.append(df.time_ms.values[i] - curr_time)
-      curr_time = df.time_ms.values[i]
-    else: # A new cell (or the first cell)
-      curr_cell = df.cellname.values[i] # Set the new cell
-      nodes_diff.append(df.num_nodes.values[i])
-      curr_node = df.num_nodes.values[i]
-      time_diff.append(0) # Not really accurate but real way is too long
-      curr_time = df.time_ms.values[i]
-  # Now len(_diff) lists should equal df.shape[0]
-  return nodes_diff, time_diff
+
+def db_summary(dbfile):
+  """ 
+  Show the tables and their elements in a sql db file. Input must be
+  either a string (.db file location) or a cursor object 
+  (sqlite3.connect(dbfile.db).cursor() )
+  """
+  if type(dbfile) is str:
+    dbfile = sqlite3.connect(dbfile).cursor()
+  cur.execute("select name from sqlite_master where type='table';")
+  print('Tables are:')
+  print(cur.fetchall())
+  cur.execute("select name from sqlite_master where type='table';")
+  tables = cur.fetchall()
+  for tab_ in tables:
+    table_name = tab_[0]
+    table_string = "select * from %s" %table_name
+    cur.execute(table_string)
+    col_names = list(map(lambda x: x[0], cur.description))
+    print('    Columns of %s :' %table_name)
+    print(col_names)
+  return 
+  
+  
 
 
 
